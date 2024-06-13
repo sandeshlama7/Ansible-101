@@ -1,0 +1,41 @@
+---
+- name: Hackathon
+  hosts: aws_ec2
+  become: true
+  gather_facts: false
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: 8586-terraform-state
+    ansible_aws_ssm_profile: default
+    ansible_aws_ssm_timeout: 200
+
+  tasks:
+  - name: Print current user
+    command: whoami
+    register: current_user
+
+  - name: Display current user
+    debug:
+      msg: "The playbook is running as user: {{ current_user.stdout }}"
+
+  - name: Install Poetry
+    shell: curl -sSL https://install.python-poetry.org | python3 -
+    args:
+      executable: /bin/bash
+
+  - name: Add Poetry to PATH in .bashrc
+    lineinfile:
+      path: /root/.bashrc
+      create: yes
+      line: 'export PATH=/root/.local/bin:$PATH'
+      state: present
+
+  - name: Source .bashrc to update PATH for the session
+    shell: . /root/.bashrc
+    args:
+      executable: /bin/bash
+
+  - name: Installing awscli
+    apt:
+      name: awscli
+      state: present
